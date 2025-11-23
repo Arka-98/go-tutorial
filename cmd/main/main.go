@@ -3,8 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/Arka-98/go-tutorial/internal/problems"
 	"reflect"
-
 	// "github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
@@ -100,7 +100,7 @@ func main() {
 	// problems.StarPattern(5)
 
 	// array of map values
-	createArrayOfMapElems()
+	// createArrayOfMapElems()
 
 	// var arr4 []int
 	// i, j := 5, 10
@@ -116,6 +116,12 @@ func main() {
 	// if i != 0 {
 
 	// }
+
+	fmt.Println(problems.Factorial(5))
+	fmt.Println(problems.Fibonacci(5))
+	fmt.Println(problems.SumOfDigits(986))
+
+	pointersExample()
 }
 
 func add(operand1, operand2 int) int {
@@ -183,4 +189,32 @@ func createArrayOfMapElems() {
 	mapArr := []map[string]int{{"m11": 5, "m12": 10}, {"m21": 6, "m22": 12}}
 
 	fmt.Println(mapArr)
+}
+
+func pointersExample() {
+	var ptr *int
+
+	x := 10
+
+	ptr = &x
+
+	fmt.Println(x, ptr, *ptr)
+
+	*ptr++
+
+	fmt.Println(x, *ptr)
+
+	var doublePtr **int
+	var singlePtr *int
+
+	y := 10
+	// val2 := 10
+
+	singlePtr = &y
+	doublePtr = &singlePtr
+
+	*singlePtr++
+	**doublePtr++
+
+	fmt.Println(*singlePtr, **doublePtr)
 }
