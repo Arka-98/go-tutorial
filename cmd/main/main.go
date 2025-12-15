@@ -2,22 +2,29 @@ package main
 
 import (
 	"bufio"
+	_ "embed"
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
+	"math/rand"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
 
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
-
-	// "github.com/Arka-98/go-tutorial/internal/problems"
-
-	// "github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
+
+//go:embed embed_example.txt
+var outputContent string
+
+func init() {
+	loadEnvFile()
+}
 
 func main() {
 	/*
@@ -97,7 +104,7 @@ func main() {
 
 	fmt.Println(val)
 
-	panicDeferExample(10)
+	fmt.Println("logging panic res", panicDeferExample(10))
 
 	val, fn := getValAndFunc()
 
@@ -139,8 +146,24 @@ func main() {
 	// genericsExample()
 	// errorHandling()
 	// textTemplates()
+	// consoleApp()
+	// diceGame()
 
-	consoleApp()
+	// namesMapById := map[int]string{0: "Sam", 1: "Tom", 2: "Jerry"}
+
+	// fmt.Println(namesMapById)
+
+	// urlParsing()
+	// buildUrl()
+	// readerExample("ABCDEFG")
+	// writerExample("this is a writer test\n", os.Stdout)
+	// fmt.Println(writingToFile("this is a sample text"))
+	// fmt.Println(bufferedFileWrite("this is buffered file write\n"))
+	// fmt.Println(readingFromFile())
+	// fmt.Println(openAndReadFromFile())
+	// fmt.Println(outputContent)
+
+	fmt.Println(os.Getenv("ENV_VAR_01"))
 }
 
 func add(operand1, operand2 int) int {
@@ -168,10 +191,11 @@ func process(val int) (int, error) {
 	return val, nil
 }
 
-func panicDeferExample(input int) {
+func panicDeferExample(input int) (myVar int) {
+	myVar = 5
+
 	defer fmt.Println("Deferred log 1", input)
-	// input = 20
-	defer fmt.Println("Deferred log 2", input)
+	defer fmt.Printf("Deferred log 2 input = %d, myVar = %d\n", input, myVar)
 
 	if input < 0 {
 		panic("Negative numbers not allowed")
@@ -179,8 +203,20 @@ func panicDeferExample(input int) {
 
 	input = 30
 
-	fmt.Println("Normal log 1", input)
+	fmt.Printf("Normal log 1 input = %d, myVar = %d\n", input, myVar)
 	defer fmt.Println("Deferred log 3", input)
+
+	defer func() {
+		myVar = 10
+
+		fmt.Println("myVar is", myVar)
+	}()
+
+	return func() int {
+		fmt.Println("returning")
+
+		return myVar
+	}()
 }
 
 func getValAndFunc() (int, func() int) {
@@ -421,9 +457,6 @@ func consoleApp() {
 			os.Exit(0)
 		default:
 			fmt.Println("Please choose the correct option")
-		}
-
-		if optionMapKey == "" {
 			continue
 		}
 
@@ -433,4 +466,235 @@ func consoleApp() {
 			fmt.Println(err)
 		}
 	}
+}
+
+func diceGame() {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Println("Menu")
+		fmt.Println("1. Roll dice")
+		fmt.Println("2. Exit")
+		fmt.Println("Choose an option")
+
+		option, _ := reader.ReadString('\n')
+
+		switch strings.TrimSpace(option) {
+		case "1":
+			firstDie, secondDie := rollDie(1, 6), rollDie(1, 6)
+
+			fmt.Printf("Die 1 - %d, Die 2 - %d\nTotal - %d\n", firstDie, secondDie, firstDie+secondDie)
+		case "2":
+			os.Exit(0)
+		default:
+			fmt.Println("Please choose the correct option")
+		}
+	}
+}
+
+func rollDie(lower, upper int) int {
+	return rand.Intn(upper-lower+1) + lower
+}
+
+func urlParsing() {
+	endpoint := "http://localhost:8001/api/v1/users/1?skip=0&limit=10&limit=15&limit=20"
+	parsedUrl, err := url.Parse(endpoint)
+
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+
+		return
+	}
+
+	fmt.Println(parsedUrl.Host, parsedUrl.RawQuery, parsedUrl.Path, parsedUrl.Port())
+	fmt.Println(parsedUrl.Query())
+}
+
+func buildUrl() {
+	url := &url.URL{
+		Scheme: "https",
+		Host:   "localhost:4000",
+		Path:   "api/v1/users",
+	}
+	query := url.Query()
+
+	query.Set("skip", "10")
+	query.Set("skip", "15")
+	query.Set("limit", "20")
+
+	url.RawQuery = query.Encode()
+
+	fmt.Println("Built URL", url.String())
+
+	str := "Hello golang"
+
+	str = "da"
+
+	fmt.Println(str)
+}
+
+// reads from provided str arg
+func readerExample(str string) {
+	reader := bufio.NewReader(strings.NewReader(str))
+	data := make([]byte, 2)
+
+	for {
+		n, err := reader.Read(data)
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			fmt.Println("Error reading string:", err)
+
+			return
+		}
+
+		fmt.Println(string(data[:n]))
+	}
+}
+
+// writes provided str arg to a provided writer
+func writerExample(str string, w io.Writer) {
+	writer := bufio.NewWriter(w)
+	n, err := writer.WriteString(str)
+
+	if err != nil {
+		fmt.Println("Error writing:", err)
+
+		return
+	}
+
+	err = writer.Flush()
+
+	if err != nil {
+		fmt.Println("Error flushing:", err)
+
+		return
+	}
+
+	fmt.Printf("Written %d bytes", n)
+}
+
+func writingToFile(text string) (err error) {
+	file, err := os.Create("output.txt")
+
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+
+		return
+	}
+
+	_, err = file.Write([]byte(text))
+
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+
+		return
+	}
+
+	defer func() {
+		err = file.Close()
+	}()
+
+	return
+}
+
+func bufferedFileWrite(text string) (err error) {
+	file, err := os.Create("output-2.txt")
+
+	if err != nil {
+		return
+	}
+
+	writer := bufio.NewWriter(file)
+
+	_, err = writer.Write([]byte(text))
+
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		err = writer.Flush()
+		err = file.Close()
+	}()
+
+	return
+}
+
+func readingFromFile() (err error) {
+	content, err := os.ReadFile("input.txt")
+
+	if err != nil {
+		fmt.Println("Error reading from file:", err)
+
+		return
+	}
+
+	fmt.Println(string(content))
+
+	return
+}
+
+func openAndReadFromFile() (err error) {
+	file, err := os.Open("input.txt")
+
+	defer func() {
+		err = file.Close()
+	}()
+
+	if err != nil {
+		fmt.Println("Error reading from file:", err)
+
+		return
+	}
+
+	reader := bufio.NewReader(file)
+	data := make([]byte, 16)
+
+	for {
+		_, err = reader.Read(data)
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			fmt.Println("Error reading from file:", err)
+
+			return
+		}
+
+		fmt.Println("Content:", string(data))
+	}
+
+	return
+}
+
+func loadEnvFile() (err error) {
+	file, err := os.Open(".env")
+
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		err = file.Close()
+	}()
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		kvStr := strings.Split(line, "=")
+		
+		os.Setenv(kvStr[0], kvStr[1])
+	}
+
+	err = scanner.Err()
+
+	return
 }
