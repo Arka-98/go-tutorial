@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"math/rand"
 	"net/url"
 	"os"
@@ -162,8 +163,9 @@ func main() {
 	// fmt.Println(readingFromFile())
 	// fmt.Println(openAndReadFromFile())
 	// fmt.Println(outputContent)
+	// fmt.Println(os.Getenv("ENV_VAR_01"))
 
-	fmt.Println(os.Getenv("ENV_VAR_01"))
+	loggerExample()
 }
 
 func add(operand1, operand2 int) int {
@@ -690,11 +692,26 @@ func loadEnvFile() (err error) {
 		line := scanner.Text()
 
 		kvStr := strings.Split(line, "=")
-		
+
 		os.Setenv(kvStr[0], kvStr[1])
 	}
 
 	err = scanner.Err()
 
 	return
+}
+
+func loggerExample() {
+	logger, err := utils.NewLogger()
+
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+
+	defer logger.Close()
+
+	logger.Info("Initializing dependencies")
+	logger.Info("Dependencies initialized")
+	logger.Debug("Creating default users")
+	logger.Info("Service started successfully")
 }
