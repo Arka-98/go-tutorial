@@ -3,9 +3,9 @@ package structs
 import "fmt"
 
 type Address struct {
-	Street  string
-	City    string
-	Country string
+	Street  string `json:"street"`
+	City    string `json:"city"`
+	Country string `json:"country"`
 }
 
 type Organization struct {

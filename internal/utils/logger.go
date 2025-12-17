@@ -60,9 +60,10 @@ func NewLogger() (*Logger, error) {
 	flags := log.Ldate | log.Ltime | log.Lshortfile
 
 	return &Logger{
-		info:  log.New(multiWriter, Green+"INFO: "+CustomGray, flags),
-		debug: log.New(multiWriter, Blue+"DEBUG: "+CustomGray, flags),
-		warn:  log.New(multiWriter, Yellow+"WARN: "+CustomGray, flags),
+		info:  log.New(multiWriter, INFO+"INFO: "+CustomGray, flags),
+		debug: log.New(multiWriter, DEBUG+"DEBUG: "+CustomGray, flags),
+		warn:  log.New(multiWriter, WARN+"WARN: "+CustomGray, flags),
 		error: log.New(multiWriter, ERROR+"ERROR: "+CustomGray, flags),
+		file: file,
 	}, nil
 }

@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func init() {
-	fmt.Println("Init example")
+	fmt.Println("Init example", os.Getenv("ENV_VAR_01"))
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -166,6 +167,7 @@ func main() {
 	// fmt.Println(os.Getenv("ENV_VAR_01"))
 
 	loggerExample()
+	jsonExample()
 }
 
 func add(operand1, operand2 int) int {
@@ -714,4 +716,44 @@ func loggerExample() {
 	logger.Info("Dependencies initialized")
 	logger.Debug("Creating default users")
 	logger.Info("Service started successfully")
+}
+
+func jsonExample() {
+	type Person struct {
+		FirstName string          `json:"first_name,omitempty"`
+		LastName  string          `json:"last_name,omitempty"`
+		Address   structs.Address `json:"address"`
+	}
+
+	person := Person{
+		FirstName: "Arkadipta",
+		LastName:  "Das",
+		Address: structs.Address{
+			Street:  "Baker Street",
+			City:    "London",
+			Country: "UK",
+		},
+	}
+
+	data, err := json.Marshal(person)
+
+	if err != nil {
+		fmt.Println("Error while marshalling:", err)
+
+		return
+	}
+
+	fmt.Println(string(data))
+
+	var newPerson Person
+
+	err = json.Unmarshal(data, &newPerson)
+
+	if err != nil {
+		fmt.Println("Error while unmarshalling", err)
+
+		return
+	}
+
+	fmt.Println(newPerson, newPerson == person)
 }
