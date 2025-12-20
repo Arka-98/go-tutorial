@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -12,7 +13,6 @@ import (
 	"math/rand"
 	"net/url"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/Arka-98/go-tutorial/internal/generics"
@@ -32,89 +32,89 @@ func main() {
 	/*
 		variables demo
 	*/
-	const name = "Arkadipta"
-	const employeeId int = 101
-	job, age := "Developer", 27
+	// const name = "Arkadipta"
+	// const employeeId int = 101
+	// job, age := "Developer", 27
 
-	fmt.Println(utils.GetQuote(), name, employeeId, job, age)
+	// fmt.Println(utils.GetQuote(), name, employeeId, job, age)
 
-	const rem = 22 / 7
+	// const rem = 22 / 7
 
-	fmt.Println(rem, reflect.TypeOf(rem))
+	// fmt.Println(rem, reflect.TypeOf(rem))
 
-	/*
-		array & slices demo
-	*/
-	numsArr := [5]int{0, 1, 2}
-	fmt.Println(numsArr, numsArr[2], reflect.TypeOf(numsArr))
+	// /*
+	// 	array & slices demo
+	// */
+	// numsArr := [5]int{0, 1, 2}
+	// fmt.Println(numsArr, numsArr[2], reflect.TypeOf(numsArr))
 
-	for _, v := range numsArr {
-		fmt.Printf("Index: %d Value: %d\n", v)
-	}
+	// for _, v := range numsArr {
+	// 	fmt.Printf("Index: %d Value: %d\n", v)
+	// }
 
-	arr1 := [3]int{0, 1, 2}
-	arr2 := [3]int{5, 1, 2}
+	// arr1 := [3]int{0, 1, 2}
+	// arr2 := [3]int{5, 1, 2}
 
-	fmt.Println(arr1 == arr2)
+	// fmt.Println(arr1 == arr2)
 
-	arr1Slice := numsArr[2:3]
-	// sliceWithMake := make([]int, 3)
+	// arr1Slice := numsArr[2:3]
+	// // sliceWithMake := make([]int, 3)
 
-	fmt.Println(cap(arr1Slice), len(arr1Slice))
+	// fmt.Println(cap(arr1Slice), len(arr1Slice))
 
-	var arr3 []int
+	// var arr3 []int
 
-	fmt.Println(arr3, reflect.TypeOf(arr3))
+	// fmt.Println(arr3, reflect.TypeOf(arr3))
 
-	/*
-		maps
-	*/
-	// map1 := map[string]int{"a": 5, "b": 10, "c": 15}
+	// /*
+	// 	maps
+	// */
+	// // map1 := map[string]int{"a": 5, "b": 10, "c": 15}
 
-	// var nilMap map[string]int
+	// // var nilMap map[string]int
 
-	// nilMap["key1"] = 5
+	// // nilMap["key1"] = 5
 
-	// fmt.Println("Nil map", nilMap)
+	// // fmt.Println("Nil map", nilMap)
 
-	map2 := make(map[string]map[string]int)
+	// map2 := make(map[string]map[string]int)
 
-	// map2["key1"] = 5
+	// // map2["key1"] = 5
 
-	map2["key1"] = map[string]int{"a": 5, "b": 10, "c": 15}
-	map2["key2"] = map[string]int{"a": 3, "b": 6}
+	// map2["key1"] = map[string]int{"a": 5, "b": 10, "c": 15}
+	// map2["key2"] = map[string]int{"a": 3, "b": 6}
 
-	delete(map2, "key2")
+	// delete(map2, "key2")
 
-	fmt.Println("non existing key", map2["dawd"], map2["key2"])
+	// fmt.Println("non existing key", map2["dawd"], map2["key2"])
 
-	next := createCounter()
+	// next := createCounter()
 
-	fmt.Println(next())
-	fmt.Println(next())
-	fmt.Println(next())
-	fmt.Println(next())
-	fmt.Println(next())
+	// fmt.Println(next())
+	// fmt.Println(next())
+	// fmt.Println(next())
+	// fmt.Println(next())
+	// fmt.Println(next())
 
-	fmt.Println(applyOperation(2, 5, add))
+	// fmt.Println(applyOperation(2, 5, add))
 
-	val, err := process(-10)
+	// val, err := process(-10)
 
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
 
-	fmt.Println(val)
+	// fmt.Println(val)
 
-	fmt.Println("logging panic res", panicDeferExample(10))
+	// fmt.Println("logging panic res", panicDeferExample(10))
 
-	val, fn := getValAndFunc()
+	// val, fn := getValAndFunc()
 
-	fmt.Println(val, fn())
+	// fmt.Println(val, fn())
 
-	variadicExample(arr1[:]...)
+	// variadicExample(arr1[:]...)
 
-	fmt.Println("outside variadic example", arr1)
+	// fmt.Println("outside variadic example", arr1)
 
 	// problems.StarPattern(5)
 
@@ -165,9 +165,20 @@ func main() {
 	// fmt.Println(openAndReadFromFile())
 	// fmt.Println(outputContent)
 	// fmt.Println(os.Getenv("ENV_VAR_01"))
+	// loggerExample()
+	// jsonExample()
+	// slicesExample()
 
-	loggerExample()
-	jsonExample()
+	exStruct := IStruct{
+		value: "val",
+		// log: func() {
+		// 	fmt.Println("struct log")
+		// },
+	}
+
+	exStruct.Log()
+
+	typesExample(exStruct)
 }
 
 func add(operand1, operand2 int) int {
@@ -756,4 +767,58 @@ func jsonExample() {
 	}
 
 	fmt.Println(newPerson, newPerson == person)
+}
+
+func pipeExample() (err error) {
+	pr, pw := io.Pipe()
+
+	go func() {
+		pw.Write([]byte("Heyaa"))
+
+		err = pw.Close()
+	}()
+
+	buf := new(bytes.Buffer)
+
+	buf.ReadFrom(pr)
+	fmt.Println(buf.String())
+
+	return
+}
+
+func slicesExample() {
+	bytes := []byte{'a', 'b'}
+
+	bytes = append(bytes, 78)
+
+	fmt.Println(string(bytes))
+
+	dataMapWithNew := new(map[string]int)
+	dataMapWithMake := make(map[string]int)
+
+	// (*dataMapWithNew)["a"] = 5
+	dataMapWithMake["a"] = 5
+
+	fmt.Println(dataMapWithNew, dataMapWithMake)
+}
+
+type IExample interface {
+	Log()
+}
+
+type IStruct struct {
+	value string
+	// log   func()
+}
+
+func (s IStruct) Log() {
+	fmt.Println("Explicit struct log function")
+}
+
+func typesExample(data IExample) {
+	fmt.Printf("Type is %T and the data value is %v\n", data, data)
+
+	data = IExample(data)
+
+	fmt.Printf("Again Type is %T and the data value is %v", data, data)
 }
