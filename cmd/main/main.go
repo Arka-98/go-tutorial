@@ -14,7 +14,9 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
 	"github.com/Arka-98/go-tutorial/internal/structs"
@@ -169,16 +171,45 @@ func main() {
 	// jsonExample()
 	// slicesExample()
 
-	exStruct := IStruct{
-		value: "val",
-		// log: func() {
-		// 	fmt.Println("struct log")
-		// },
-	}
+	// exStruct := IStruct{
+	// 	value: "val",
+	// 	// log: func() {
+	// 	// 	fmt.Println("struct log")
+	// 	// },
+	// }
 
-	exStruct.Log()
+	// exStruct.Log()
 
-	typesExample(exStruct)
+	// typesExample(exStruct)
+
+	// fmt.Println("Before goroutine")
+
+	// go goroutinesExample()
+
+	// fmt.Println("After goroutine")
+
+	// for range 100000 {}
+
+	// fmt.Println("After processing")
+
+	// fmt.Println("begin heavy processing")
+
+	// go heavyFn()
+	// go heavyFn()
+
+	// time.Sleep(30 * time.Second)
+
+	// channelsExample()
+
+	// bufferedChannels()
+
+	// bufferedChannels2()
+
+	// channelSync()
+
+	// channelSyncWithClose()
+
+	sendOnlyChannel()
 }
 
 func add(operand1, operand2 int) int {
@@ -821,4 +852,161 @@ func typesExample(data IExample) {
 	data = IExample(data)
 
 	fmt.Printf("Again Type is %T and the data value is %v", data, data)
+}
+
+func goroutinesExample() {
+	fmt.Println("Hello from goroutine")
+}
+
+func heavyFn() {
+	for range 100000000000 {
+	}
+
+	fmt.Println("Complete!")
+}
+
+func linkedListExample() {
+	llist := linked_list.NewLinkedList()
+
+	llist.Append(10)
+	llist.Append(5)
+	llist.Append(8)
+
+	err := llist.Traverse()
+
+	llist.Shift()
+
+	err = llist.Traverse()
+
+	llist.Unshift(3)
+
+	err = llist.Traverse()
+
+	if err != nil {
+		fmt.Println(err)
+
+		return
+	}
+}
+
+func channelsExample() {
+	greeting := make(chan string)
+	greeter := "Hello"
+
+	go func() {
+		fmt.Println("Init goroutine")
+
+		greeting <- greeter
+
+		fmt.Println("Sent to channel")
+	}()
+
+	fmt.Println("Outside goroutine")
+
+	time.Sleep(3 * time.Second)
+
+	fmt.Println("Before reciving")
+
+	receiver := <-greeting
+
+	fmt.Println("After receiving")
+	fmt.Println(receiver)
+}
+
+// blocking receive from buffered channel
+func bufferedChannels() {
+	bufChannel := make(chan int, 2)
+
+	bufChannel <- 5
+	bufChannel <- 10
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		fmt.Println("1st goroutine completed")
+	}()
+	go func() {
+		time.Sleep(5 * time.Second)
+		fmt.Println("2nd goroutine completed")
+	}()
+
+	fmt.Println("Received:", <-bufChannel)
+	fmt.Println("Received:", <-bufChannel)
+	fmt.Println("Received:", <-bufChannel)
+	fmt.Println("End")
+}
+
+// blocking send from buffered channel
+func bufferedChannels2() {
+	bufChannel := make(chan int, 2)
+
+	bufChannel <- 5
+	bufChannel <- 10
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		fmt.Println("1st goroutine completed", <-bufChannel)
+	}()
+
+	bufChannel <- 15
+
+	fmt.Println("End")
+}
+
+func channelSync() {
+	numGoroutines := 3
+	data := make(chan int, numGoroutines)
+
+	for i := range numGoroutines {
+		go func() {
+			time.Sleep(2 * time.Second)
+			fmt.Println("from goroutine:", i)
+			data <- i * 2
+		}()
+	}
+
+	fmt.Println("Blocking receivers till value sent to channel")
+
+	for range numGoroutines {
+		fmt.Println("received:", <-data)
+	}
+}
+
+func channelSyncWithClose() {
+	ch := make(chan int)
+
+	go func() {
+		for i := range 3 {
+			ch <- i * 2
+
+			fmt.Println("Sent:", i)
+		}
+
+		close(ch)
+	}()
+
+	fmt.Println("Blocking till value is sent")
+
+	for re := range ch {
+		fmt.Println("Received:", re)
+	}
+}
+
+func sendOnlyChannel() {
+	ch := make(chan int)
+
+	go func(ch chan<- int) {
+		for i := range 5 {
+			ch <- i * 2
+		}
+
+		close(ch)
+	}(ch)
+
+	consume(ch)
+}
+
+func consume(ch <-chan int) {
+	for rcv := range ch {
+		fmt.Println("Received:", rcv)
+	}
 }
