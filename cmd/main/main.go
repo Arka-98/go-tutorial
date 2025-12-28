@@ -209,7 +209,11 @@ func main() {
 
 	// channelSyncWithClose()
 
-	sendOnlyChannel()
+	// sendOnlyChannel()
+
+	// multiplexWithSelect()
+
+	multiplexWithFor()
 }
 
 func add(operand1, operand2 int) int {
@@ -994,19 +998,83 @@ func channelSyncWithClose() {
 func sendOnlyChannel() {
 	ch := make(chan int)
 
-	go func(ch chan<- int) {
+	produce(ch)
+	consume(ch)
+}
+
+func produce(ch chan<- int) {
+	go func() {
 		for i := range 5 {
-			ch <- i * 2
+			time.Sleep(800 * time.Millisecond)
+
+			ch <- (i + 1) * 2
 		}
 
 		close(ch)
-	}(ch)
-
-	consume(ch)
+	}()
 }
 
 func consume(ch <-chan int) {
 	for rcv := range ch {
 		fmt.Println("Received:", rcv)
 	}
+}
+
+func multiplexWithSelect() {
+	ch1 := make(chan int)
+	ch2 := make(chan int)
+
+	// close(ch1)
+	// close(ch2)
+
+	produce(ch1)
+	produce(ch2)
+
+	for range 2 {
+		select {
+		case val := <-ch1:
+			fmt.Println("Ch 1 received:", val)
+		case val := <-ch2:
+			fmt.Println("Ch 2 received:", val)
+			// default:
+			// 	fmt.Println("Channels are not ready")
+		}
+	}
+
+	fmt.Println("End")
+}
+
+func multiplexWithFor() {
+	ch := make(chan int)
+
+	go func() {
+		for i := range 5 {
+			time.Sleep(time.Second)
+
+			ch <- (i + 1) * 2
+		}
+
+		close(ch)
+	}()
+
+loop:
+
+	for {
+		select {
+		case data, ok := <-ch:
+			if !ok {
+				fmt.Println("Channel closed")
+
+				break loop
+			}
+
+			fmt.Println("Received:", data)
+		}
+	}
+
+	// for re := range ch {
+	// 	fmt.Println("Received:", re)
+	// }
+
+	fmt.Println("End")
 }
