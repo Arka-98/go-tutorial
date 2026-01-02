@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -14,11 +15,13 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
+	"github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
@@ -213,7 +216,27 @@ func main() {
 
 	// multiplexWithSelect()
 
-	multiplexWithFor()
+	// multiplexWithFor()
+
+	// multiplexWithTwoChannels()
+
+	// contextExample()
+
+	// testFn1()
+
+	// timerExample()
+
+	// tickerExample()
+
+	// testFn2()
+
+	// workerPoolExample()
+
+	// problems.Process()
+
+	// waitGroupExample()
+
+	problems.ProcessWg()
 }
 
 func add(operand1, operand2 int) int {
@@ -1075,6 +1098,214 @@ loop:
 	// for re := range ch {
 	// 	fmt.Println("Received:", re)
 	// }
+
+	fmt.Println("End")
+}
+
+func multiplexWithTwoChannels() {
+	ch1 := make(chan int)
+	ch2 := make(chan int)
+
+	go func() {
+		for i := range 10 {
+			time.Sleep(500 * time.Millisecond)
+
+			ch1 <- i * 2
+		}
+
+		close(ch1)
+	}()
+	go func() {
+		for re := range ch1 {
+			fmt.Println("Ch1 received:", re)
+
+			if re%2 == 0 {
+				ch2 <- re
+			}
+		}
+
+		close(ch2)
+	}()
+
+	for {
+		select {
+		case data, ok := <-ch2:
+			if !ok {
+				fmt.Println("Channel closed")
+
+				return
+			}
+
+			fmt.Println("Ch2 received:", data)
+		}
+	}
+}
+
+func testFn1() {
+	ch := make(chan struct{})
+
+	go func() {
+		time.Sleep(2 * time.Second)
+
+		close(ch)
+	}()
+
+	fmt.Println("Blocking starts...")
+
+	fmt.Println(<-ch)
+
+	// for re := range ch {
+	// 	fmt.Println("Received:", re)
+	// }
+}
+
+func testFn2() {
+	bufCh := make(chan int, 3)
+
+	go func() {
+		for re := range bufCh {
+			fmt.Println("Received on goroutine 1:", re)
+		}
+
+		fmt.Println("Complete goroutine 1")
+	}()
+	go func() {
+		for re := range bufCh {
+			fmt.Println("Received on goroutine 2:", re)
+		}
+
+		fmt.Println("Complete goroutine 2")
+	}()
+
+	fmt.Println("Sleep start")
+
+	time.Sleep(2 * time.Second)
+
+	fmt.Println("Sleep end")
+
+	for i := range 5 {
+		val := (i + 1) * 2
+		bufCh <- val
+
+		fmt.Println("Sent", val)
+	}
+
+	close(bufCh)
+
+	time.Sleep(time.Second)
+
+	fmt.Println("End")
+}
+
+func contextExample() {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+
+	defer cancel()
+
+	ctx = context.WithValue(ctx, "user", "jwt1234")
+
+	time.Sleep(3 * time.Second)
+
+	fmt.Println("Blocking starts")
+
+	select {
+	case _, ok := <-ctx.Done():
+		fmt.Printf("Timed out. Channel closed: %v, Err: %v \n", !ok, ctx.Err())
+	default:
+		fmt.Println(ctx.Value("user"))
+	}
+
+	// <-ctx.Done()
+
+	// for re := range ctx.Done() {
+	// 	fmt.Println("Timed out, expired:", re, ctx.Err())
+	// }
+
+	fmt.Println("After:", ctx.Value("user"))
+}
+
+func timerExample() {
+	timer := time.NewTimer(2 * time.Second)
+
+	fmt.Println("Sleep starts")
+	time.Sleep(1 * time.Second)
+	fmt.Println("Sleep ends")
+
+	stopped := timer.Stop()
+
+	fmt.Println("Stopped:", stopped)
+
+	// timer channel receive
+	fmt.Println("timer receive starts")
+	res := <-timer.C
+
+	fmt.Printf("new timer ended: %v, Stopped: %v \n", res, stopped)
+}
+
+func tickerExample() {
+	ticker := time.NewTicker(time.Second)
+
+	for curTime := range ticker.C {
+		fmt.Println(curTime)
+	}
+}
+
+func worker(id int, tasks <-chan int, results chan<- int) {
+	for task := range tasks {
+		fmt.Printf("Worker %d: Received job - %d\n", id, task)
+
+		// Processing
+		time.Sleep(time.Second)
+
+		results <- task * 2
+	}
+}
+
+func workerPoolExample() {
+	numTasks := 10
+	numWorkers := 3
+	tasks := make(chan int, numTasks)
+	results := make(chan int, numTasks)
+
+	// initiate workers
+	for i := range numWorkers {
+		go worker(i+1, tasks, results)
+	}
+
+	// send tasks
+	for i := range numTasks {
+		tasks <- i + 1
+	}
+
+	close(tasks)
+
+	// receive results
+	for range numTasks {
+		fmt.Println("Result - ", <-results)
+	}
+}
+
+func waitGroupWorker(id int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	fmt.Println("Initiated goroutine:", id)
+
+	// Processing
+	time.Sleep(time.Second)
+
+	fmt.Println("Finished goroutine:", id)
+}
+
+func waitGroupExample() {
+	var wg sync.WaitGroup
+
+	for i := range 5 {
+		wg.Add(1)
+
+		go waitGroupWorker(i+1, &wg)
+	}
+
+	wg.Wait()
 
 	fmt.Println("End")
 }
