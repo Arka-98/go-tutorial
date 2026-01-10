@@ -49,6 +49,8 @@ func Process() {
 		requests <- TicketRequest{personId: i + 1, numTickets: numTickets, cost: 100 * numTickets}
 	}
 
+	close(requests)
+
 	for range numPersons {
 		ticketRes := <-results
 

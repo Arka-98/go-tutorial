@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -21,7 +22,6 @@ import (
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
-	"github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
@@ -236,7 +236,21 @@ func main() {
 
 	// waitGroupExample()
 
-	problems.ProcessWg()
+	// problems.ProcessWg()
+
+	// problems.MutexEx()
+
+	// problems.AtomicExample()
+
+	// testFn3()
+
+	// fmt.Println(int(0.3/0.1))
+
+	// problems.TokenBucketEx()
+
+	// problems.FixedWindowEx()
+
+	typeAliasAndNewTypeEx()
 }
 
 func add(operand1, operand2 int) int {
@@ -1308,4 +1322,60 @@ func waitGroupExample() {
 	wg.Wait()
 
 	fmt.Println("End")
+}
+
+func testFn3() {
+	bufCh := make(chan int)
+
+	go func() {
+		fmt.Println("goroutine sleep start..")
+
+		time.Sleep(500 * time.Millisecond)
+
+		for i := range 10 {
+			bufCh <- i + 1
+
+			time.Sleep(300 * time.Millisecond)
+		}
+
+		bufCh <- 11
+
+		close(bufCh)
+	}()
+
+	time.Sleep(3 * time.Second)
+
+	fmt.Println("Waiting...")
+
+	for re := range bufCh {
+		fmt.Println("Received:", re)
+	}
+}
+
+type EmployeeID int
+
+func (e EmployeeID) isValid() bool {
+	if e > 0 && e < 1000 {
+		return true
+	}
+
+	return false
+}
+
+type TestFnType func(a, b int) bool
+
+func (fn TestFnType) allow(a, b int) bool {
+	return fn(a, b)
+}
+
+func typeAliasAndNewTypeEx() {
+	empId := EmployeeID(1)
+	testFn := func(e EmployeeID) {
+		fmt.Printf("Type: %T, Value: %d, Reflect Type: %v, Valid: %v\n", e, e, reflect.TypeFor[EmployeeID](), e.isValid())
+	}
+
+	testFn(empId)
+	fmt.Println(TestFnType(func(a, b int) bool {
+		return a > b
+	}).allow(11, 10))
 }
