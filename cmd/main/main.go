@@ -22,6 +22,7 @@ import (
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
+	"github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
@@ -250,7 +251,9 @@ func main() {
 
 	// problems.FixedWindowEx()
 
-	typeAliasAndNewTypeEx()
+	// typeAliasAndNewTypeEx()
+
+	problems.GenericSortEx()
 }
 
 func add(operand1, operand2 int) int {
