@@ -3,6 +3,7 @@ package problems
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type Counter struct {
@@ -11,15 +12,19 @@ type Counter struct {
 }
 
 func (c *Counter) incr() {
-	defer c.mu.Unlock()
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	time.Sleep(time.Millisecond)
 
 	c.count++
 }
 
 func (c *Counter) get() int {
-	defer c.mu.Unlock()
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	time.Sleep(500 * time.Millisecond)
 
 	return c.count
 }
@@ -29,17 +34,27 @@ func MutexEx() {
 
 	counter := &Counter{}
 	numGoroutines := 10
+	start := time.Now()
 
-	for range numGoroutines {
-		fmt.Println("ran")
+	// for i := range numGoroutines {
+	// 	fmt.Println("ran goroutine", i)
+	// 	wg.Go(func() {
+	// 		for range 1000 {
+	// 			counter.incr()
+	// 		}
+	// 	})
+	// }
 
+	wg.Wait()
+	fmt.Printf("Total count: %d, Elapsed: %v", counter.get(), time.Since(start))
+
+	for i := range numGoroutines {
+		fmt.Println("ran goroutine", i)
 		wg.Go(func() {
-			for range 1000 {
-				counter.incr()
-			}
+			fmt.Println("Get count value:", counter.get())
 		})
 	}
 
 	wg.Wait()
-	fmt.Println("Total count:", counter.get())
+	fmt.Println("End")
 }

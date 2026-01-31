@@ -14,15 +14,18 @@ import (
 	"math/rand"
 	"net/url"
 	"os"
+	"os/signal"
 	"reflect"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+	"C"
 
+	concurrencycourse "github.com/Arka-98/go-tutorial/internal/concurrency_course"
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
-	"github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
@@ -75,7 +78,7 @@ func main() {
 	// /*
 	// 	maps
 	// */
-	// // map1 := map[string]int{"a": 5, "b": 10, "c": 15}
+	// map1 := map[string]int{"a": 5, "b": 10, "c": 15}
 
 	// // var nilMap map[string]int
 
@@ -253,7 +256,61 @@ func main() {
 
 	// typeAliasAndNewTypeEx()
 
-	problems.GenericSortEx()
+	// problems.GenericSortEx()
+
+	// inlineStructEx()
+
+	// runtime.GOMAXPROCS(2)
+
+	// var wg sync.WaitGroup
+
+	// for i := range 5 {
+	// 	wg.Go(func() {
+	// 		doWork(i)
+	// 	})
+	// }
+
+	// wg.Wait()
+
+	// fmt.Println("End")
+
+	// intsWithMake := make([]int, 3)
+	// intsWithNew := new([]int)
+	// intsIntialized := []int{}
+	// var intsDeclare []int
+
+	// fmt.Println(reflect.TypeOf(intsWithMake), reflect.TypeOf(intsWithNew), reflect.TypeOf(intsIntialized), reflect.TypeOf(intsDeclare), intsWithMake, intsWithNew, intsIntialized, intsDeclare)
+
+	// intsWithMake[0] = 1
+	// // (*intsWithNew)[0] = 1
+	// // intsIntialized[0] = 1
+	// // intsDeclare[0] = 1
+
+	// fmt.Println(intsWithMake, intsWithNew, intsIntialized, intsDeclare)
+
+	// signalsExample()
+
+	// problems.RWMutexEx()
+
+	// problems.SyncCondEx()
+
+	// syncOnceEx()
+
+	// problems.SyncPoolEx()
+
+	// wgTest()
+
+	// iopipeExample()
+
+	// concurrencycourse.GoroutineWgEx()
+
+	// concurrencycourse.GoroutineAddTest()
+
+	// osPipeEx()
+
+	// concurrencycourse.PizzeriaEx()
+
+	concurrencycourse.DiningPhilosopherEx()
 }
 
 func add(operand1, operand2 int) int {
@@ -1381,4 +1438,175 @@ func typeAliasAndNewTypeEx() {
 	fmt.Println(TestFnType(func(a, b int) bool {
 		return a > b
 	}).allow(11, 10))
+}
+
+func inlineStructEx() {
+	obj := struct{ a, b int }{5, 10}
+
+	fmt.Println(reflect.TypeOf(obj), obj.a, obj.b)
+}
+
+func doWork(id int) {
+	fmt.Printf("Now: %v, worker: %d\n", time.Now(), id)
+
+	for range 1000_000_000 {
+	}
+
+	fmt.Printf("Now: %v, Finished: %d", time.Now(), id)
+}
+
+func signalsExample() {
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		for sig := range sigs {
+			switch sig {
+			case syscall.SIGINT:
+				fmt.Println("Interrupt:", sig)
+				continue
+			default:
+				fmt.Println("Default:", sig)
+				os.Exit(1)
+			}
+		}
+	}()
+
+	fmt.Println("Working...")
+
+	for {
+		time.Sleep(time.Second)
+	}
+}
+
+type dummy struct {
+	items []int
+}
+
+func (d *dummy) print() {
+	fmt.Println(d.items)
+}
+
+func (d *dummy) append(item int) {
+	d.items = append(d.items, item)
+}
+
+func testFn4() {
+	dummy := dummy{
+		items: make([]int, 3),
+	}
+
+	dummy.print()
+}
+
+func initialize() {
+	fmt.Println("Setup job")
+}
+
+func syncOnceEx() {
+	var (
+		once sync.Once
+		wg   sync.WaitGroup
+	)
+
+	for i := range 5 {
+		wg.Go(func() {
+			fmt.Printf("Goroutine #%d\n", i)
+			once.Do(initialize)
+		})
+	}
+
+	wg.Wait()
+}
+
+func greet(txt string) {
+	fmt.Println("hi", txt)
+}
+
+func wgTest() {
+	var wg sync.WaitGroup
+
+	for i := range 5 {
+		wg.Go(func() {
+			greet(fmt.Sprintf("goroutine #%d", i))
+		})
+	}
+
+	wg.Wait()
+
+	fmt.Println("End", &wg)
+}
+
+func iopipeExample() {
+	pr, pw := io.Pipe()
+	data := make([]byte, 2)
+
+	go func() {
+		defer pw.Close()
+
+		pw.Write([]byte("hey "))
+		pw.Write([]byte("there!!"))
+	}()
+
+	for {
+		fmt.Println("begin read")
+
+		n, err := pr.Read(data)
+
+		fmt.Println("end read")
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			fmt.Println("Error reading file")
+
+			return
+		}
+
+		fmt.Println(string(data[:n]))
+	}
+}
+
+func printSomething(s string) {
+	fmt.Print(s)
+}
+
+func osPipeEx() {
+	var wg sync.WaitGroup
+
+	r, w, err := os.Pipe()
+	stdout := os.Stdout
+
+	if err != nil {
+		fmt.Println("Error creating os.Pipe:", err)
+
+		return
+	}
+
+	os.Stdout = w
+
+	wg.Go(func() {
+		printSomething("heyy")
+
+		err = w.Close()
+
+		if err != nil {
+			fmt.Println("Error closing os writer:", err)
+		}
+	})
+	wg.Wait()
+
+	res, err := io.ReadAll(r)
+	os.Stdout = stdout
+
+	if err != nil {
+		fmt.Println("Error reading:", err)
+
+		return
+	}
+
+	fmt.Println(string(res))
 }
