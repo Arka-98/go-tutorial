@@ -6,50 +6,157 @@ import (
 	"time"
 )
 
-const HUNGER_COUNT = 3
+const hungerCount = 3
+const eatDuration = 2 * time.Second
+const thinkDuration = 500 * time.Millisecond
 
-type Fork struct {
-	value int
-	mu    sync.Mutex
-}
+// type Fork struct {
+// 	value int
+// 	mu    sync.Mutex
+// }
 
-func NewFork(value int) *Fork {
-	return &Fork{value: value}
+type request struct {
+	philosopher *Philosopher
+	ack         chan struct{}
 }
 
 type Philosopher struct {
-	name      string
-	leftFork  *Fork
-	rightFork *Fork
-	hunger    int
+	name       string
+	hunger     int
+	leftFork   chan struct{}
+	rightFork  chan struct{}
+	doneCh     chan struct{}
+	requestsCh chan request
 }
 
-func (ph *Philosopher) hasLeftFork() {
-	fmt.Printf("%s has left fork %d. Time: %v\n", ph.name, ph.leftFork.value, time.Now())
-}
-
-func (ph *Philosopher) hasRightFork() {
-	fmt.Printf("%s has right fork %d. Time: %v\n", ph.name, ph.rightFork.value, time.Now())
-}
-
-// When philosopher acquired both forks.
 func (ph *Philosopher) eat() {
-	ph.hunger--
 	fmt.Printf("%s has both forks and is eating. Time: %v\n", ph.name, time.Now())
-	// time.Sleep(2 * time.Second)
+	time.Sleep(eatDuration)
 }
 
-// When philosopher did not acquire any forks.
 func (ph *Philosopher) think() {
-	fmt.Printf("%s is thinking. Time: %v\n", ph.name, time.Now())
-	// time.Sleep(500 * time.Millisecond)
+	fmt.Printf("%s is thinking. Time %v\n", ph.name, time.Now())
+	time.Sleep(thinkDuration)
 }
 
 func (ph *Philosopher) leave() {
 	fmt.Printf("%s has left the table. Time: %v\n", ph.name, time.Now())
 }
 
-func createPhilosophers() []*Philosopher {
+func createPhilosophers(philosopherNames []string, requestsCh chan request, doneCh chan struct{}) []*Philosopher {
+	philosophers := make([]*Philosopher, 0, len(philosopherNames))
+	forks := make([]chan struct{}, len(philosopherNames))
+
+	for i := range len(philosopherNames) {
+		forks[i] = make(chan struct{}, 1)
+		forks[i] <- struct{}{}
+	}
+
+	for i, name := range philosopherNames {
+		philosophers = append(philosophers, &Philosopher{
+			name:       name,
+			hunger:     hungerCount,
+			requestsCh: requestsCh,
+			leftFork:   forks[i],
+			rightFork:  forks[(i+1)%len(philosopherNames)],
+			doneCh:     doneCh,
+		})
+	}
+
+	return philosophers
+}
+
+func Coordinator(philosophers []*Philosopher, requestsCh chan request, doneCh chan struct{}) {
+	var (
+		next            request
+		completedEating int
+	)
+
+	totalHungerCount := hungerCount * len(philosophers)
+	queue := make([]request, 0, totalHungerCount)
+
+	for {
+		if len(queue) > 0 {
+			next = queue[0]
+		}
+
+		select {
+		case req := <-requestsCh:
+			queue = append(queue, req)
+		case next.ack <- struct{}{}:
+			queue = queue[1:]
+		case <-doneCh:
+			completedEating++
+
+			if completedEating == totalHungerCount {
+				return
+			}
+		}
+	}
+}
+
+func Dine(philosopher *Philosopher, completionOrderCh chan<- string) {
+	for i := range philosopher.hunger {
+		ack := make(chan struct{})
+		philosopher.requestsCh <- request{philosopher: philosopher, ack: ack}
+
+		// wait for permission from coordinator
+		<-ack
+
+		// try to take forks to start eating
+		<-philosopher.leftFork
+		<-philosopher.rightFork
+
+		philosopher.eat()
+
+		// put back the forks
+		philosopher.leftFork <- struct{}{}
+		philosopher.rightFork <- struct{}{}
+		philosopher.doneCh <- struct{}{}
+
+		if i == philosopher.hunger-1 {
+			close(philosopher.doneCh)
+
+			completionOrderCh <- philosopher.name
+		}
+
+		philosopher.think()
+	}
+
+	philosopher.leave()
+}
+
+func Initialize(
+	philosopherNames []string,
+	completionOrder *[]string,
+	pwg *sync.WaitGroup,
+	ewg *sync.WaitGroup,
+) ([]*Philosopher, chan<- string) {
+	completionOrderCh := make(chan string)
+	requestsCh := make(chan request)
+	doneCh := make(chan struct{})
+	philosophers := createPhilosophers(philosopherNames, requestsCh, doneCh)
+
+	ewg.Go(func() {
+		Coordinator(philosophers, requestsCh, doneCh)
+	})
+	pwg.Add(len(philosophers))
+	ewg.Go(func() {
+		for philosopherName := range completionOrderCh {
+			*completionOrder = append(*completionOrder, philosopherName)
+		}
+	})
+
+	return philosophers, completionOrderCh
+}
+
+func DiningPhilosopherEx() {
+	var (
+		wg  sync.WaitGroup
+		pwg sync.WaitGroup
+		ewg sync.WaitGroup
+	)
+
 	philosopherNames := []string{
 		"Newton",
 		"Dijsktra",
@@ -57,84 +164,12 @@ func createPhilosophers() []*Philosopher {
 		"Einstein",
 		"Maxwell",
 	}
-	philosophers := make([]*Philosopher, 0, len(philosopherNames))
-	forks := make([]Fork, 0, len(philosopherNames))
+	completionOrder := make([]string, 0, len(philosopherNames))
+	philosophers, completionOrderCh := Initialize(philosopherNames, &completionOrder, &pwg, &ewg)
 
-	for i := range len(philosopherNames) {
-		forks = append(forks, *NewFork(i))
-	}
-
-	for i, name := range philosopherNames {
-		philosophers = append(philosophers, &Philosopher{
-			name:      name,
-			leftFork:  &forks[i],
-			rightFork: &forks[(i+1)%len(philosopherNames)],
-			hunger:    HUNGER_COUNT,
-		})
-	}
-
-	return philosophers
-}
-
-func dine(philosopher *Philosopher, pwg *sync.WaitGroup, once *sync.Once, completionOrderCh chan<- string) {
-	pwg.Done()
-	pwg.Wait()
-	once.Do(func() {
-		fmt.Println("All philosophers are seated.")
-	})
-
-	for philosopher.hunger > 0 {
-		if philosopher.leftFork.value < philosopher.rightFork.value {
-			philosopher.leftFork.mu.Lock()
-			philosopher.hasLeftFork()
-			philosopher.rightFork.mu.Lock()
-			philosopher.hasRightFork()
-
-			philosopher.eat()
-
-			philosopher.leftFork.mu.Unlock()
-			philosopher.rightFork.mu.Unlock()
-		} else {
-			philosopher.rightFork.mu.Lock()
-			philosopher.hasRightFork()
-			philosopher.leftFork.mu.Lock()
-			philosopher.hasLeftFork()
-
-			philosopher.eat()
-
-			philosopher.rightFork.mu.Unlock()
-			philosopher.leftFork.mu.Unlock()
-		}
-
-		philosopher.think()
-	}
-
-	philosopher.leave()
-	completionOrderCh <- philosopher.name
-}
-
-func DiningPhilosopherEx() {
-	var (
-		pwg  sync.WaitGroup
-		ewg sync.WaitGroup
-		wg   sync.WaitGroup
-		once sync.Once
-	)
-
-	completionOrderCh := make(chan string)
-	philosophers := createPhilosophers()
-	completionOrder := make([]string, 0, len(philosophers))
-
-	pwg.Add(len(philosophers))
-	ewg.Go(func() {
-		for philosopherName := range completionOrderCh {
-			completionOrder = append(completionOrder, philosopherName)
-		}
-	})
-
-	for i := range philosophers {
+	for _, philosopher := range philosophers {
 		wg.Go(func() {
-			dine(philosophers[i], &pwg, &once, completionOrderCh)
+			Dine(philosopher, completionOrderCh)
 		})
 	}
 

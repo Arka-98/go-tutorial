@@ -33,7 +33,7 @@ func TestConcurrentAdd(t *testing.T) {
 		}
 	})
 	wg.Wait()
-	
+
 	res, err := io.ReadAll(r)
 	os.Stdout = stdout
 
@@ -45,5 +45,39 @@ func TestConcurrentAdd(t *testing.T) {
 
 	if !strings.Contains(output, "1") {
 		t.Errorf("Expected %v but got %v", 1, output)
+	}
+}
+
+func TestDiningPhilosophers(t *testing.T) {
+	var (
+		wg   sync.WaitGroup
+		pwg  sync.WaitGroup
+		ewg  sync.WaitGroup
+	)
+
+	philosopherNames := []string{
+		"Sam",
+		"Tom",
+		"Jake",
+		"Cole",
+		"Arthur",
+	}
+	completionOrder := make([]string, 0, len(philosopherNames))
+	philosophers, completionOrderCh := concurrencycourse.Initialize(philosopherNames, &completionOrder, &pwg, &ewg)
+
+	for _, philosopher := range philosophers {
+		wg.Go(func() {
+			concurrencycourse.Dine(philosopher, completionOrderCh)
+		})
+	}
+
+	wg.Wait()
+	close(completionOrderCh)
+	ewg.Wait()
+
+	if len(completionOrder) != len(philosopherNames) {
+		t.Errorf(
+			"Expected completion order slice length to be %d, instead got %d", len(philosopherNames), len(completionOrder),
+		)
 	}
 }

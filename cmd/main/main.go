@@ -1,6 +1,7 @@
 package main
 
 import (
+	"C"
 	"bufio"
 	"bytes"
 	"context"
@@ -20,15 +21,14 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"C"
 
-	concurrencycourse "github.com/Arka-98/go-tutorial/internal/concurrency_course"
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
+import concurrencycourse "github.com/Arka-98/go-tutorial/internal/concurrency_course"
 
 //go:embed embed_example.txt
 var outputContent string
@@ -1609,4 +1609,11 @@ func osPipeEx() {
 	}
 
 	fmt.Println(string(res))
+}
+
+func testFn5(i int, ch <-chan int) {
+	for val := range ch {
+		fmt.Printf("goroutine %d: %d\n", i, val)
+		time.Sleep(time.Second)
+	}
 }

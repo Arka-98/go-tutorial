@@ -24,7 +24,7 @@ func newBuffer(size int) *buffer {
 	return buffer
 }
 
-func (b *buffer) produce(item int) {
+func (b *buffer) produce(item int, id int) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -34,7 +34,7 @@ func (b *buffer) produce(item int) {
 
 	b.items = append(b.items, item)
 
-	fmt.Println("Produced:", item)
+	fmt.Printf("Thread: %d, Produced: %d\n", id, item)
 	b.cond.Signal()
 }
 
@@ -43,7 +43,7 @@ func (b *buffer) consume() int {
 	defer b.mu.Unlock()
 
 	for isItemsEmpty(b.items) {
-		fmt.Println("items is empty")
+		// fmt.Println("items is empty")
 		b.cond.Wait()
 	}
 
@@ -59,21 +59,21 @@ func (b *buffer) consume() int {
 }
 
 func isItemsEmpty(items []int) bool {
-	fmt.Println("ran")
+	// fmt.Println("ran")
 
 	return len(items) == 0
 }
 
-func producer(b *buffer) {
+func producer(b *buffer, id int) {
 	for i := range count {
-		time.Sleep(800 * time.Millisecond)
-		b.produce(100 + i)
+		time.Sleep(100 * time.Millisecond)
+		b.produce(100 + i, id)
 	}
 }
 
 func consumer(b *buffer) {
 	for range count {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(800 * time.Millisecond)
 		b.consume()
 	}
 }
@@ -82,7 +82,9 @@ func SyncCondEx() {
 	var wg sync.WaitGroup
 	b := newBuffer(bufferSize)
 
-	wg.Go(func() { producer(b) })
+	wg.Go(func() { producer(b, 1) })
+	wg.Go(func() { producer(b, 2) })
+	wg.Go(func() { consumer(b) })
 	wg.Go(func() { consumer(b) })
 	wg.Wait()
 
