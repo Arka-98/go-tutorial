@@ -21,7 +21,6 @@ import (
 	"syscall"
 	"time"
 
-	concurrencycourse "github.com/Arka-98/go-tutorial/internal/concurrency_course"
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
@@ -32,9 +31,9 @@ import (
 //go:embed embed_example.txt
 var outputContent string
 
-func init() {
-	loadEnvFile()
-}
+// func init() {
+// 	loadEnvFile()
+// }
 
 func main() {
 	/*
@@ -333,7 +332,11 @@ func main() {
 	// 	testFn5(0, ch)
 	// })
 
-	concurrencycourse.SleepingBarberEx()
+	// concurrencycourse.SleepingBarberEx()
+
+	clientExample()
+
+	InitServer()
 }
 
 func add(operand1, operand2 int) int {
@@ -1640,7 +1643,7 @@ func testFn5(i int, ch <-chan int) {
 	// 	time.Sleep(time.Second)
 	// }
 
-	val := <- ch
+	val := <-ch
 
 	fmt.Println(val)
 }
