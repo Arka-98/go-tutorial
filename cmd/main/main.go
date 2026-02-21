@@ -1,7 +1,6 @@
 package main
 
 import (
-	"C"
 	"bufio"
 	"bytes"
 	"context"
@@ -22,13 +21,13 @@ import (
 	"syscall"
 	"time"
 
+	concurrencycourse "github.com/Arka-98/go-tutorial/internal/concurrency_course"
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
-import concurrencycourse "github.com/Arka-98/go-tutorial/internal/concurrency_course"
 
 //go:embed embed_example.txt
 var outputContent string
@@ -310,7 +309,31 @@ func main() {
 
 	// concurrencycourse.PizzeriaEx()
 
-	concurrencycourse.DiningPhilosopherEx()
+	// concurrencycourse.DiningPhilosopherEx()
+
+	// var wg sync.WaitGroup
+
+	// wg.Go(func() {
+	// 	time.Sleep(2 * time.Second)
+	// 	close(ch)
+	// 	fmt.Println("channel is closed")
+	// })
+	// wg.Go(func() {
+	// 	for i := range 4 {
+	// 		ch <- i
+
+	// 		time.Sleep(500 * time.Millisecond)
+	// 	}
+
+	// 	close(ch)
+
+	// 	fmt.Println("channel is closed")
+	// })
+	// wg.Go(func() {
+	// 	testFn5(0, ch)
+	// })
+
+	concurrencycourse.SleepingBarberEx()
 }
 
 func add(operand1, operand2 int) int {
@@ -1612,8 +1635,12 @@ func osPipeEx() {
 }
 
 func testFn5(i int, ch <-chan int) {
-	for val := range ch {
-		fmt.Printf("goroutine %d: %d\n", i, val)
-		time.Sleep(time.Second)
-	}
+	// for val := range ch {
+	// 	fmt.Printf("goroutine %d: %d\n", i, val)
+	// 	time.Sleep(time.Second)
+	// }
+
+	val := <- ch
+
+	fmt.Println(val)
 }
