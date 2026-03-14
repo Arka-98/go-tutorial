@@ -14,7 +14,7 @@ type Whale struct {
 	Name string
 }
 
-// Bird methods
+// Eat: Bird methods.
 func (bird Bird) Eat(food string) string {
 	return fmt.Sprintf("%v eats %v!", bird.Name, food)
 }

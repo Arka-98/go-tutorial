@@ -24,29 +24,32 @@ func (c *RWCounter) get() int {
 	c.rwMu.RLock()
 	defer c.rwMu.RUnlock()
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(2000 * time.Millisecond)
 
 	return c.count
 }
 
 func RWMutexEx() {
-	var wg sync.WaitGroup
-	rwCounter := &RWCounter{}
+	var (
+		wg        sync.WaitGroup
+		rwCounter RWCounter
+	)
+
 	numGoroutines := 5
 
 	fmt.Println("Before loop")
 
 	for range numGoroutines {
 		wg.Go(func() {
-			fmt.Println("Get RW count value:", rwCounter.get())
+			fmt.Printf("Get RW count value: %d %v\n", rwCounter.get(), time.Now())
 		})
 	}
 
 	for i := range numGoroutines {
 		wg.Go(func() {
-			for range 5 {
+			for range 1 {
 				rwCounter.incr()
-				fmt.Printf("Incremented goroutine %d\n", i)
+				fmt.Printf("Incremented goroutine %d %v\n", i, time.Now())
 			}
 		})
 	}

@@ -24,6 +24,7 @@ import (
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
+	"github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
@@ -288,7 +289,7 @@ func main() {
 
 	// signalsExample()
 
-	// problems.RWMutexEx()
+	problems.RWMutexEx()
 
 	// problems.SyncCondEx()
 
@@ -334,9 +335,23 @@ func main() {
 
 	// concurrencycourse.SleepingBarberEx()
 
-	clientExample()
+	// clientExample()
 
-	InitServer()
+	// InitServer()
+
+	// jsonExample()
+
+	// jsonExample2()
+
+	// structs.EmbedExample()
+
+	// ints := []int{4, 8, 2, 6}
+
+	// fmt.Println(ints[:len(ints)-1])
+
+	value := "hello"
+
+	checkType[string](value)
 }
 
 func add(operand1, operand2 int) int {
@@ -889,9 +904,9 @@ func loggerExample() {
 
 func jsonExample() {
 	type Person struct {
-		FirstName string          `json:"first_name,omitempty"`
-		LastName  string          `json:"last_name,omitempty"`
-		Address   structs.Address `json:"address"`
+		FirstName       string `json:"first_name,omitempty"`
+		LastName        string `json:"last_name,omitempty"`
+		structs.Address `json:"address"`
 	}
 
 	person := Person{
@@ -925,6 +940,52 @@ func jsonExample() {
 	}
 
 	fmt.Println(newPerson, newPerson == person)
+}
+
+func jsonExample2() {
+	type Department string
+
+	const (
+		IT  Department = "IT"
+		CSE Department = "CSE"
+		ECE Department = "ECE"
+	)
+
+	type Student struct {
+		Name       string           `json:"name"`
+		RollNo     int              `json:"rollNo"`
+		Department Department       `json:"department"`
+		Address    *structs.Address `json:"address"`
+	}
+
+	student := &Student{
+		Name:       "Jack",
+		RollNo:     15,
+		Department: IT,
+		Address: &structs.Address{
+			Street:  "Kwality",
+			City:    "Kolkata",
+			Country: "India",
+		},
+	}
+
+	studentJson, err := json.Marshal(*student)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(string(studentJson))
+
+	var newStudent = new(Student)
+
+	err = json.Unmarshal(studentJson, newStudent)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(newStudent, newStudent.Address, *newStudent == *student)
 }
 
 func pipeExample() (err error) {
@@ -1646,4 +1707,10 @@ func testFn5(i int, ch <-chan int) {
 	val := <-ch
 
 	fmt.Println(val)
+}
+
+func checkType[T any](value any) {
+	val, ok := value.(T)
+
+	fmt.Println(val, ok)
 }
