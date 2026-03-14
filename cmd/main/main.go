@@ -352,6 +352,8 @@ func main() {
 	value := "hello"
 
 	checkType[string](value)
+
+	testFn6(nil)
 }
 
 func add(operand1, operand2 int) int {
@@ -1710,7 +1712,14 @@ func testFn5(i int, ch <-chan int) {
 }
 
 func checkType[T any](value any) {
+	var expr T
+
 	val, ok := value.(T)
 
 	fmt.Println(val, ok)
+	fmt.Printf("Type: %T, Value: %v", expr, expr)
+}
+
+func testFn6(mapElem map[string]string) {
+	fmt.Println(mapElem)
 }
