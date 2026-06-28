@@ -24,7 +24,8 @@ import (
 	"github.com/Arka-98/go-tutorial/internal/dsa/linked_list"
 	"github.com/Arka-98/go-tutorial/internal/generics"
 	"github.com/Arka-98/go-tutorial/internal/interfaces"
-	"github.com/Arka-98/go-tutorial/internal/problems"
+
+	// "github.com/Arka-98/go-tutorial/internal/problems"
 	"github.com/Arka-98/go-tutorial/internal/structs"
 	"github.com/Arka-98/go-tutorial/internal/utils"
 )
@@ -289,7 +290,7 @@ func main() {
 
 	// signalsExample()
 
-	problems.RWMutexEx()
+	// problems.RWMutexEx()
 
 	// problems.SyncCondEx()
 
@@ -349,11 +350,89 @@ func main() {
 
 	// fmt.Println(ints[:len(ints)-1])
 
-	value := "hello"
+	// value := "hello"
 
-	checkType[string](value)
+	// checkType[string](value)
 
-	testFn6(nil)
+	// testFn6(nil)
+
+	// testFn7(status("s"))
+
+	// testFn8()
+
+	// ctx := context.Background()
+
+	// testFn9Context(&ctx, map[string]int{"a": 5})
+
+	// fmt.Println(ctx.Value("fieldsMap"))
+
+	// testFn10()
+
+	// testMarshalUnmarshal[structs.Employee]()
+
+	// testMatrix()
+
+	// fmt.Println(6 | 3)
+
+	// file, _ := os.OpenFile("logs/app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+
+	// utils.SloggerEx(file)
+
+	// slog.Debug("hello world")
+	// slog.Info("hello world")
+	// slog.Warn("hello world")
+	// slog.Error("hello world")
+	// studentLogger := slog.With("module", "student")
+	// slog.Info("enrollment_processed",
+	// 	slog.Group("student",
+	// 		slog.Int("id", 101),
+	// 		slog.String("name", "Joyce"),
+	// 	),
+	// 	slog.String("course", "advanced_go"),
+	// )
+
+	// file.Close()
+
+	// stringsMap := map[string]int{
+	// 	"DEBUG": 5,
+	// 	"INFO":  10,
+	// }
+
+	// fmt.Println(stringsMap["adw"])
+
+	type student struct {
+		ID        int    `json:"id"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Email     string `json:"email,omitempty"`
+	}
+
+	st1 := &student{
+		ID:        1,
+		FirstName: "John",
+		LastName:  "Mcclane",
+	}
+	st2 := &student{
+		ID:        2,
+		FirstName: "Alex",
+		LastName:  "Watson",
+		Email:     "alex@test.com",
+	}
+	// stds := []student{*st1, *st2}
+
+	// validateStruct(&stds)
+
+	parseJson(BulkInsertResponse[student]{
+		Inserted: 3,
+		Data: []student{
+			*st1,
+			*st2,
+			{3, "Max", "Payne", "max@test.com"},
+		},
+	})
+
+	testFn11()
+	testFn12()
 }
 
 func add(operand1, operand2 int) int {
@@ -1722,4 +1801,268 @@ func checkType[T any](value any) {
 
 func testFn6(mapElem map[string]string) {
 	fmt.Println(mapElem)
+}
+
+type status string
+
+const (
+	available status = "available"
+	offline   status = "offline"
+	away      status = "away"
+)
+
+func testFn7(statusIn status) {
+	// val, ok := statusIn.(status)
+
+	// fmt.Println(val, ok)
+	fmt.Println(statusIn)
+
+	type emp struct {
+		name string
+		age  *int
+		tags []string
+	}
+
+	var emp1 *emp
+
+	emp1.tags = append(emp1.tags, "sample")
+
+	fmt.Println(emp1)
+
+	dummyStatus := "asd"
+
+	fmt.Println(dummyStatus, status(dummyStatus))
+}
+
+func testFn8() {
+	type emp struct {
+		Name string   `filter:"name"`
+		Age  int      `filter:"age"`
+		Tags []string `filter:"tags"`
+	}
+
+	data := map[string]any{
+		"name": "jack",
+		"age":  26,
+		"tags": []string{"skiing", "bodybuilding"},
+	}
+	johnEmp := emp{
+		Name: "john",
+		Age:  10,
+		Tags: []string{"tag1", "tag2"},
+	}
+
+	fmt.Println("before", johnEmp)
+
+	v := reflect.ValueOf(&johnEmp).Elem()
+	t := reflect.TypeOf(johnEmp)
+
+	for i := range v.NumField() {
+		fmt.Println("value:", v.Field(i).Interface(), "type:", t.Field(i).Name, t.Field(i).Type, "tags:", t.Field(i).Tag.Get("filter"))
+
+		tag := t.Field(i).Tag.Get("filter")
+
+		for k, val := range data {
+			if k == tag && v.Field(i).IsValid() && v.Field(i).CanSet() {
+				newVal := reflect.ValueOf(val)
+
+				if newVal.Type() == v.Field(i).Type() {
+					v.Field(i).Set(newVal)
+				} else {
+					fmt.Println("cant set")
+				}
+			}
+		}
+	}
+
+	fmt.Println("after", johnEmp)
+}
+
+func testFn9Context(ctx *context.Context, fieldsMap map[string]int) {
+	*ctx = context.WithValue(*ctx, "fieldsMap", fieldsMap)
+}
+
+func testFn10() {
+	type Address struct {
+		Street string
+		City   string
+		State  string
+	}
+
+	type Location struct {
+		Lat   string
+		Lng   string
+		State string
+	}
+
+	type emp struct {
+		Address
+		Location
+
+		Name *string
+		Age  *int
+		Job  string
+		Tags [2]string
+	}
+
+	emp1 := emp{Address{"Baker St", "London", "UK"}, Location{"52", "39", "England"}, new("John"), new(29), "", [2]string{"10xdev", "fullstack"}}
+
+	// fmt.Println(emp.State)
+
+	v := reflect.ValueOf(&emp1).Elem()
+
+	for i := range v.NumField() {
+		val := v.Field(i)
+		typ := v.Type().Field(i)
+
+		fmt.Println(typ.Name, val.Interface(), val.IsZero(), val.Kind(), val.Type())
+
+		if val.Kind() == reflect.Pointer {
+			fmt.Println(val.Elem().Kind())
+		}
+	}
+}
+
+func testMarshalUnmarshal[T any]() {
+	var data T
+
+	fmt.Printf("%v of type %T\n", data, data)
+
+	type emp struct {
+		ID        int    `json:"-"`
+		FirstName string `json:"firstName"`
+		LastName  string `json:"lastName"`
+		Age       int    `json:"age"`
+	}
+
+	var emps []emp
+
+	json.Unmarshal([]byte(`[
+		{
+			"id": 101,
+			"firstName": "John",
+			"lastName": "Mclane",
+			"age": 28
+		}
+	]`), &emps)
+
+	fmt.Println(emps)
+
+	parsed, _ := json.Marshal(emp{102, "Carl", "Johnson", 35})
+
+	fmt.Println(string(parsed))
+
+	type person struct {
+		emp
+
+		Weight int    `json:"weight"`
+		Street string `json:"street"`
+	}
+
+	var person1 person
+
+	json.Unmarshal([]byte(`{
+		"id": 101,
+		"firstName": "John",
+		"lastName": "Mclane",
+		"age": 28,
+		"weight": 78
+	}`), &person1)
+
+	fmt.Println(person1)
+
+	parsed2, _ := json.Marshal(person1)
+
+	fmt.Println(string(parsed2))
+}
+
+func testMatrix() {
+	data := make([][]string, 5)
+
+	for i := range data {
+		data[i] = append(data[i], "hi")
+	}
+
+	fmt.Println(data)
+
+	// var ptr *string
+	// ptr := new()
+
+	// fmt.Println(ptr, *ptr)
+}
+
+func validateStruct[T any](value *T) {
+	v := reflect.ValueOf(value).Elem()
+	// t := reflect.TypeOf(value)
+
+	for field, val := range v.Fields() {
+		fmt.Println(val.Interface(), field.Name)
+	}
+}
+
+type BulkInsertResponse[T any] struct {
+	Inserted int `json:"inserted"`
+	Data     []T `json:"data"`
+}
+
+func parseJson[T any](v BulkInsertResponse[T]) {
+	json, err := json.Marshal(v)
+
+	if err != nil {
+		fmt.Println(err)
+
+		return
+	}
+
+	fmt.Println(string(json))
+}
+
+type testError struct {
+	code   string
+	reason string
+}
+
+func (t *testError) Error() string {
+	return t.code + " " + t.reason
+}
+
+type testError2 struct {
+	code   string
+	reason string
+}
+
+func (t testError2) Error() string {
+	return t.code + " " + t.reason
+}
+
+func testFn11() {
+	testErr1 := &testError{"101", "sql: error fetching from db"}
+	testErr2 := &testError{"102", "sql: db does not exist"}
+
+	err := fmt.Errorf("wrapping error %w", testErr1)
+
+	fmt.Println(err, errors.Is(err, testErr1), errors.Is(err, testErr2))
+
+	err = fmt.Errorf("wrapping error 2 %w", testError2{"201", "pgx: db not exists"})
+
+	var testErr3 testError2
+
+	newTestErr := errors.As(err, &testErr3)
+
+	fmt.Println(newTestErr, testErr3)
+}
+
+func testFn12() {
+	var sliceArrDecl []int
+
+	sliceArrWithNew := new([]int)
+	sliceArrWithMake := make([]int, 0)
+
+	fmt.Println(sliceArrDecl, sliceArrWithNew, sliceArrWithMake)
+
+	sliceArrDecl = append(sliceArrDecl, 1)
+	*sliceArrWithNew = append(*sliceArrWithNew, 1)
+	sliceArrWithMake = append(sliceArrWithMake, 1)
+
+	fmt.Println(sliceArrDecl, sliceArrWithNew, sliceArrWithMake)
 }

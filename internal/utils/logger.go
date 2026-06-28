@@ -12,7 +12,6 @@ const (
 	green      = "\033[32m"
 	yellow     = "\033[33m"
 	blue       = "\033[34m"
-	cyan       = "\033[36m"
 	customGray = "\033[38;5;248m"
 )
 const (
@@ -28,25 +27,6 @@ type logger struct {
 	debug *log.Logger // DEBUG logger
 	error *log.Logger // ERROR logger
 	file  *os.File    // Logger file
-}
-
-func (logger logger) Info(msg string) {
-	logger.info.Output(2, green+msg+reset)
-}
-
-func (logger logger) Warn(msg string) {
-	logger.warn.Output(2, yellow+msg+reset)
-}
-func (logger logger) Debug(msg string) {
-	logger.debug.Output(2, blue+msg+reset)
-}
-
-func (logger logger) Error(msg string) {
-	logger.error.Output(2, red+msg+reset)
-}
-
-func (logger logger) Close() error {
-	return logger.file.Close()
 }
 
 func NewLogger() (*logger, error) {
@@ -66,4 +46,23 @@ func NewLogger() (*logger, error) {
 		error: log.New(multiWriter, ERROR+"ERROR: "+customGray, flags),
 		file: file,
 	}, nil
+}
+
+func (logger logger) Info(msg string) {
+	logger.info.Output(2, green+msg+reset)
+}
+
+func (logger logger) Warn(msg string) {
+	logger.warn.Output(2, yellow+msg+reset)
+}
+func (logger logger) Debug(msg string) {
+	logger.debug.Output(2, blue+msg+reset)
+}
+
+func (logger logger) Error(msg string) {
+	logger.error.Output(2, red+msg+reset)
+}
+
+func (logger logger) Close() error {
+	return logger.file.Close()
 }
